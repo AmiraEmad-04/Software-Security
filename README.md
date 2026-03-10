@@ -30,6 +30,8 @@ g++ -std=c++17 -o crypto main.cpp
 ```
 ./crypto
 ```
+Or just press main.cpp run button.
+
 Then follow the interactive prompts to choose cipher type, mode, input/output files, and key.
 
 ### Key Formats
@@ -58,4 +60,6 @@ g++ -std=c++17 -o des DesMain.cpp
 ```
 ./des
 ```
+Or just press main.cpp run button.
+
 Enter the 64-bit key and plaintext as binary strings (only 0s and 1s, exactly 64 digits each).
