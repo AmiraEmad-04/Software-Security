@@ -1,96 +1,75 @@
 #pragma once
 #include "Cipher.h"
-#include <set>
 #include <stdexcept>
-#include <cctype>
+#include <set>
 
 using namespace std;
 
+/*
+ * MonoalphabeticCipher
+ * ---------------------
+ * Substitutes each letter using a fixed 26-letter substitution alphabet.
+ * Non-alpha characters pass through unchanged.
+ * Key: a 26-character string where key[i] is the cipher letter for plaintext letter (a+i).
+ *
+ * Based on concepts from Lab II (Mono-alphabetic Substitution Cipher section).
+ */
 class MonoalphabeticCipher : public Cipher {
 private:
-    string key;
-    string reverseKey;
+    char encTable[26];   // encTable[i]  = cipher char for plaintext 'a'+i
+    char decTable[26];   // decTable[i]  = plain  char for ciphertext 'a'+i
 
-    void checkKey(string k) {
-        if (k.length() != 26)
-            throw invalid_argument("Key must contain 26 letters.");
-
-        set<char> letters;
-
-        for (char c : k) {
-            if (!isalpha(c))
-                throw invalid_argument("Key must contain only alphabet letters.");
-
-            char lower = tolower(c);
-
-            if (letters.count(lower))
-                throw invalid_argument("Key must not contain duplicate letters.");
-
-            letters.insert(lower);
+    void buildDecryptionTable() {
+        for (int i = 0; i < 26; i++) {
+            int idx = encTable[i] - 'a';
+            decTable[idx] = static_cast<char>('a' + i);
         }
     }
 
-    void createReverseKey() {
-        reverseKey = string(26, ' ');
+    void validateKey(const string& key) {
+        if (key.size() != 26)
+            throw invalid_argument("[Mono] Key must be exactly 26 characters.");
 
-        for (int i = 0; i < 26; i++) {
-            int pos = key[i] - 'a';
-            reverseKey[pos] = 'a' + i;
+        set<char> seen;
+        for (char c : key) {
+            char lc = tolower(c);
+            if (!isalpha(lc))
+                throw invalid_argument("[Mono] Key must contain only alphabetic characters.");
+            if (seen.count(lc))
+                throw invalid_argument("[Mono] Key must not have duplicate letters.");
+            seen.insert(lc);
         }
     }
 
 public:
-    MonoalphabeticCipher(string k) {
-
-        checkKey(k);
-
-        for (char c : k)
-            key += tolower(c);
-
-        createReverseKey();
+    explicit MonoalphabeticCipher(const string& key) {
+        validateKey(key);
+        for (int i = 0; i < 26; i++)
+            encTable[i] = static_cast<char>(tolower(key[i]));
+        buildDecryptionTable();
     }
 
-    string encrypt(const string& text) override {
-        string output = "";
-
-        for (char c : text) {
-            int index = charIndex(c);
-
-            if (index == -1) {
-                output += c;
-            }
-            else {
-                char mapped = key[index];
-                output += applyCase(c, mapped);
-            }
+    string encrypt(const string& plaintext) override {
+        string result;
+        result.reserve(plaintext.size());
+        for (char ch : plaintext) {
+            int idx = charIndex(ch);
+            if (idx == -1) { result += ch; continue; }
+            result += applyCase(ch, encTable[idx]);
         }
-
-        return output;
+        return result;
     }
 
-    string decrypt(const string& text) override {
-        string output = "";
-
-        for (char c : text) {
-            int index = charIndex(c);
-
-            if (index == -1) {
-                output += c;
-            }
-            else {
-                char mapped = reverseKey[index];
-                output += applyCase(c, mapped);
-            }
+    string decrypt(const string& ciphertext) override {
+        string result;
+        result.reserve(ciphertext.size());
+        for (char ch : ciphertext) {
+            int idx = charIndex(ch);
+            if (idx == -1) { result += ch; continue; }
+            result += applyCase(ch, decTable[idx]);
         }
-
-        return output;
+        return result;
     }
 
-    string getName() const override {
-        return "Monoalphabetic Cipher";
-    }
-
-    string getKey() const {
-        return key;
-    }
+    string getName() const override { return "Monoalphabetic Substitution Cipher"; }
 };
